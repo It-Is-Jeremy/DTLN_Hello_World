@@ -1,27 +1,37 @@
-resource "aws_iam_policy" "iam_policy_for_lambda" {
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.0.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1.0"
+    }
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.2.0"
+    }
+  }
 
-  name         = "aws_iam_policy_for_terraform_aws_lambda_role"
-  path         = "/"
-  description  = "AWS IAM Policy for managing aws lambda role"
-  policy = <<EOF
-{
- "Version": "2012-10-17",
- "Statement": [
-   {
-     "Action": [
-       "logs:CreateLogGroup",
-       "logs:CreateLogStream",
-       "logs:PutLogEvents"
-     ],
-     "Resource": "arn:aws:logs:*:*:*",
-     "Effect": "Allow"
-   }
- ]
-}
-EOF
+  required_version = "~> 1.0"
 }
 
-resource "aws_iam_role_policy_attachment" "attach_iam_policy_to_iam_role" {
-  role        = aws_iam_role.lambda_role.name
-  policy_arn  = aws_iam_policy.iam_policy_for_lambda.arn
+provider "aws" {
+  region = "ap-southeast-2"
 }
+
+resource "random_pet" "lambda_bucket_name" {
+  prefix = "learn-terraform-functions"
+  length = 4
+}
+
+resource "aws_s3_bucket" "lambda_bucket" {
+  bucket = random_pet.lambda_bucket_name.id
+}
+
+resource "aws_s3_bucket_acl" "bucket_acl" {
+  bucket = aws_s3_bucket.lambda_bucket.id
+  acl    = "private"
+}
+
